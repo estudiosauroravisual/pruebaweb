@@ -11,8 +11,7 @@ const formatter = new Intl.NumberFormat('es-CL', {
 const inputPisos = document.getElementById('inputPisos');
 const inputTorres = document.getElementById('inputTorres');
 const displayNeto = document.getElementById('totalNeto');
-const displayIva = document.getElementById('totalIva');
-const displayFinal = document.getElementById('totalFinal');
+// Eliminamos las variables de IVA y Total Final porque ya no están en el HTML
 const formulaTexto = document.getElementById('formulaTexto');
 const botonesPlan = document.querySelectorAll('.plan-select');
 
@@ -24,13 +23,11 @@ function calcularCotizador() {
     const pisos = parseInt(inputPisos.value) || 0;
     const torres = parseInt(inputTorres.value) || 0;
 
+    // Cálculo solo del valor neto
     const neto = baseAdministrativa + (precioPlanActual * pisos * torres);
-    const iva = Math.round(neto * 0.19);
-    const total = neto + iva;
 
-    if (displayNeto) displayNeto.innerHTML = `${formatter.format(neto)} <small class="fs-6 text-muted">CLP + IVA</small>`;
-    if (displayIva) displayIva.innerText = formatter.format(iva);
-    if (displayFinal) displayFinal.innerText = formatter.format(total);
+    // Actualización de los textos (Eliminamos el + IVA)
+    if (displayNeto) displayNeto.innerHTML = `${formatter.format(neto)} <small class="fs-6 text-muted">CLP</small>`;
     if (formulaTexto) formulaTexto.innerText = `Base administrativa: ${formatter.format(baseAdministrativa)} + ${nombrePlanActual}: ${formatter.format(precioPlanActual)} × ${pisos} × ${torres}`;
 }
 
@@ -53,7 +50,9 @@ function actualizarPrecioFormulario() {
     });
 
     const neto = baseAdministrativa + (precioBaseForm * pisos);
-    const textoTotal = `${formatter.format(neto)} CLP + IVA`;
+    
+    // Eliminamos el texto "+ IVA" de lo que se muestra y de lo que te llega al correo
+    const textoTotal = `${formatter.format(neto)} CLP`;
     
     if (formTotalDisplay) formTotalDisplay.innerText = textoTotal;
     if (formTotalHidden) formTotalHidden.value = textoTotal;
@@ -82,6 +81,23 @@ document.addEventListener('DOMContentLoaded', () => {
         formPisos.addEventListener('input', actualizarPrecioFormulario);
         formPlanRadios.forEach(radio => radio.addEventListener('change', actualizarPrecioFormulario));
         actualizarPrecioFormulario();
+    }
+
+    // Validación de reCAPTCHA para el envío del correo
+    const formulario = document.querySelector('form');
+    if (formulario) {
+        formulario.addEventListener('submit', function(e) {
+            // Verificamos si existe el script de Google en la página
+            if (typeof grecaptcha !== 'undefined') {
+                const response = grecaptcha.getResponse();
+
+                if (response.length === 0) {
+                    // Si la casilla no está marcada, detenemos el envío
+                    e.preventDefault();
+                    alert("Por favor, verifica que no eres un robot.");
+                }
+            }
+        });
     }
 });
 
